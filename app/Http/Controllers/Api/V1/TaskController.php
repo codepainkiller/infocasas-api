@@ -10,9 +10,19 @@ use App\Http\Resources\V1\TaskResource;
 
 class TaskController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return TaskResource::collection(Task::all());
+        $tasks = Task::query();
+
+        if ($request->has('completed')) {
+            $tasks->where('completed', $request->completed);
+        }
+
+        if ($request->has('name')) {
+            $tasks->where('name', 'like', "%{$request->name}%");
+        }
+
+        return TaskResource::collection($tasks->latest()->get());
     }
 
     public function store(Request $request)
@@ -34,8 +44,8 @@ class TaskController extends Controller
     public function update(Request $request, Task $task)
     {
         $request->validate([
-            'name' => 'required|string',
-            'completed' => 'required|boolean'
+            'name' => 'string',
+            'completed' => 'boolean'
         ]);
 
         $task->update($request->all());
